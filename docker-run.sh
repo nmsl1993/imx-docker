@@ -15,11 +15,32 @@
 
 # source the common variables
 . ./env.sh
-
+echo "\$HOME: $HOME"
+echo "\$DOCKER_WORKDIR: $DOCKER_WORKDIR"
+echo "\$IMX_RELEASE: $IMX_RELEASE"
+echo "\$DOCKER_IMAGE_TAG: $DOCKER_IMAGE_TAG"
 # run the docker image
-docker run -it --rm \
+
+if [ -n "$1" ]; then
+    echo "Running with argument: $1"
+    docker run -it --rm \
     --volume ${HOME}:${HOME} \
     --volume ${DOCKER_WORKDIR}:${DOCKER_WORKDIR} \
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
     "${DOCKER_IMAGE_TAG}" \
     $1
+else
+    docker run -it --rm \
+    --volume ${HOME}:${HOME} \
+    --volume ${DOCKER_WORKDIR}:${DOCKER_WORKDIR} \
+    --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    "${DOCKER_IMAGE_TAG}" /bin/bash -c '
+        set -e # exit on error inside the container
+        cd ${DOCKER_WORKDIR}/${IMX_RELEASE}
+        source yocto-build.sh
+        #cd ${DOCKER_WORKDIR}/imx-yocto-bsp
+
+    '
+fi
+
+
