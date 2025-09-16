@@ -13,8 +13,8 @@ IMX_RELEASE="imx-6.12.20-2.0.0"
 
 YOCTO_DIR="${DOCKER_WORKDIR}/${IMX_RELEASE}-build"
 
-MACHINE="imx8mpevk"
-DISTRO="fsl-imx-xwayland"
+MACHINE="imx6ulevk"
+DISTRO="fsl-imx-fb"
 IMAGES="imx-image-core"
 
 REMOTE="https://github.com/nxp-imx/imx-manifest"
