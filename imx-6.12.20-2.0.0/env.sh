@@ -15,7 +15,10 @@ YOCTO_DIR="${DOCKER_WORKDIR}/${IMX_RELEASE}-build"
 
 MACHINE="imx6ulevk"
 DISTRO="fsl-imx-fb"
-IMAGES="imx-image-core"
+#IMAGES="imx-image-core"
+IMAGES="fsl-image-mfgtool-initramfs"
+
+
 
 REMOTE="https://github.com/nxp-imx/imx-manifest"
 BRANCH="imx-linux-walnascar"

@@ -19,16 +19,17 @@ echo "\$HOME: $HOME"
 echo "\$DOCKER_WORKDIR: $DOCKER_WORKDIR"
 echo "\$IMX_RELEASE: $IMX_RELEASE"
 echo "\$DOCKER_IMAGE_TAG: $DOCKER_IMAGE_TAG"
+echo "\$IMAGES: $IMAGES"
 # run the docker image
-
+#sudo mkdir -p ${DOCKER_WORKDIR}
+#sudo chmod -R a+rw ${DOCKER_WORKDIR}
 if [ -n "$1" ]; then
     echo "Running with argument: $1"
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
     --volume ${DOCKER_WORKDIR}:${DOCKER_WORKDIR} \
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
-    "${DOCKER_IMAGE_TAG}" \
-    $1
+    "${DOCKER_IMAGE_TAG}"
 else
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
@@ -36,10 +37,16 @@ else
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
     "${DOCKER_IMAGE_TAG}" /bin/bash -c '
         set -e # exit on error inside the container
-        cd ${DOCKER_WORKDIR}/${IMX_RELEASE}
-        source yocto-build.sh
-        #cd ${DOCKER_WORKDIR}/imx-yocto-bsp
-
+        echo '${DOCKER_WORKDIR}'
+     
+        # Disable repo color prompts[]
+        git config --global color.ui false
+        ls -ltrah '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-walnascar -m '${IMX_RELEASE}'.xml
+        repo sync -j`nproc`
+        EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        bitbake '${IMAGES}'
     '
 fi
 
