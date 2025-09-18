@@ -1,0 +1,8 @@
+# Ignore contents of imx-5* and imx-6* directories except for the env.sh and yocto-build.sh files
+imx-5*/
+imx-6*/
+
+!imx-5*/env.sh
+!imx-5*/yocto-build.sh
+!imx-6*/env.sh
+!imx-6*/yocto-build.sh
