@@ -43,6 +43,30 @@ if [ "$1" == "build" ]; then
         fi
         bitbake '${IMAGES}'
     '
+elif [ "$1" == "deploy_build" ]; then
+    docker run -it --rm \
+    --volume ${HOME}:${HOME} \
+    --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    --volume $(pwd)/meta-ninefives:${DOCKER_WORKDIR}/meta-ninefives \
+    "${DOCKER_IMAGE_TAG}" /bin/bash -c '
+        set -e # exit on error inside the container
+        echo '${DOCKER_WORKDIR}'
+     
+        # Disable repo color prompts[]
+        git config --global color.ui false
+        ls -ltrah '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        echo "\$MACHINE: '${MACHINE}'"
+        echo "\$IMAGES: '${IMAGES}'"
+        EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        # Add meta-ninefives layer to bblayers.conf if not already present
+        if ! grep -q "meta-ninefives" conf/bblayers.conf; then
+            echo BBLAYERS += \"\$\{BSPDIR\}/sources/meta-ninefives\" >> conf/bblayers.conf
+            echo "Added meta-ninefives layer to bblayers.conf"
+        fi
+        bitbake '${IMAGES} -c deploy'
+    '
+
 elif [ "$1" == "clean" ]; then
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
