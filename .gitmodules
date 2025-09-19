@@ -1,0 +1,3 @@
+[submodule "meta-ninefives"]
+	path = meta-ninefives
+	url = git@github.com:nmsl1993/meta-ninefives.git
