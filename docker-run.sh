@@ -24,6 +24,7 @@ if [ "$1" == "build" ]; then
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    --volume $(pwd)/meta-ninefives:${DOCKER_WORKDIR}/meta-ninefives \
     "${DOCKER_IMAGE_TAG}" /bin/bash -c '
         set -e # exit on error inside the container
         echo '${DOCKER_WORKDIR}'
@@ -35,12 +36,18 @@ if [ "$1" == "build" ]; then
         echo "\$MACHINE: '${MACHINE}'"
         echo "\$IMAGES: '${IMAGES}'"
         EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        # Add meta-ninefives layer to bblayers.conf if not already present
+        if ! grep -q "meta-ninefives" conf/bblayers.conf; then
+            echo BBLAYERS += \"\$\{BSPDIR\}/sources/meta-ninefives\" >> conf/bblayers.conf
+            echo "Added meta-ninefives layer to bblayers.conf"
+        fi
         bitbake '${IMAGES}'
     '
-if [ "$1" == "clean" ]; then
+elif [ "$1" == "clean" ]; then
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    --volume $(pwd)/meta-ninefives:${DOCKER_WORKDIR}/meta-ninefives \
     "${DOCKER_IMAGE_TAG}" /bin/bash -c '
         set -e # exit on error inside the container
         echo '${DOCKER_WORKDIR}'
@@ -52,6 +59,11 @@ if [ "$1" == "clean" ]; then
         echo "\$MACHINE: '${MACHINE}'"
         echo "\$IMAGES: '${IMAGES}'"
         EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        # Add meta-ninefives layer to bblayers.conf if not already present
+        if ! grep -q "meta-ninefives" conf/bblayers.conf; then
+            echo BBLAYERS += \"${BSPDIR}/sources/meta-ninefives\" >> conf/bblayers.conf
+            echo "Added meta-ninefives layer to bblayers.conf"
+        fi
         bitbake '${IMAGES} -c clean'
     '
 elif [ "$1" == "sync" ]; then
@@ -59,27 +71,36 @@ elif [ "$1" == "sync" ]; then
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    --volume $(pwd)/meta-ninefives:${DOCKER_WORKDIR}/meta-ninefives \
     "${DOCKER_IMAGE_TAG}" /bin/bash -c '
         set -e # exit on error inside the container
         echo '${DOCKER_WORKDIR}'
-     
+
         # Disable repo color prompts[]
         git config --global color.ui false
         ls -ltrah '${DOCKER_WORKDIR}/${IMX_RELEASE}'
         cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
         repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-walnascar -m '${IMX_RELEASE}'.xml
         repo sync -j`nproc`
+
+        # Add meta-ninefives layer to sources directory
+        if [ ! -L sources/meta-ninefives ]; then
+            ln -sf ../../meta-ninefives sources/meta-ninefives
+        fi
+        # 
     '
 elif [ "$1" == "interactive" ]; then
     echo "Running with argument: $1"
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    --volume $(pwd)/meta-ninefives:${DOCKER_WORKDIR}/meta-ninefives \
     "${DOCKER_IMAGE_TAG}" /bin/bash -c '
         echo "\$MACHINE: '${MACHINE}'"
         echo "\$IMAGES: '${IMAGES}'"
         cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
         EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        # Add meta-ninefives layer to bblayers.conf if not already present
         echo "Setup complete. Dropping into interactive shell..."
         exec /bin/bash -i
     '
