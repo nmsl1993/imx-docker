@@ -15,8 +15,8 @@ YOCTO_DIR="${DOCKER_WORKDIR}/${IMX_RELEASE}-build"
 
 MACHINE="imx6ulevk"
 DISTRO="fsl-imx-fb"
-#IMAGES="imx-image-core"
-IMAGES="fsl-image-mfgtool-initramfs"
+IMAGES="imx-image-core"
+#IMAGES="fsl-image-mfgtool-initramfs"
 
 
 

@@ -15,25 +15,49 @@
 
 # source the common variables
 . ./env.sh
-echo "\$HOME: $HOME"
-echo "\$DOCKER_WORKDIR: $DOCKER_WORKDIR"
-echo "\$IMX_RELEASE: $IMX_RELEASE"
-echo "\$DOCKER_IMAGE_TAG: $DOCKER_IMAGE_TAG"
-echo "\$IMAGES: $IMAGES"
+
 # run the docker image
 #sudo mkdir -p ${DOCKER_WORKDIR}
 #sudo chmod -R a+rw ${DOCKER_WORKDIR}
-if [ -n "$1" ]; then
+
+if [ "$1" == "build" ]; then
+    docker run -it --rm \
+    --volume ${HOME}:${HOME} \
+    --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    "${DOCKER_IMAGE_TAG}" /bin/bash -c '
+        set -e # exit on error inside the container
+        echo '${DOCKER_WORKDIR}'
+     
+        # Disable repo color prompts[]
+        git config --global color.ui false
+        ls -ltrah '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        echo "\$MACHINE: '${MACHINE}'"
+        echo "\$IMAGES: '${IMAGES}'"
+        EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        bitbake '${IMAGES}'
+    '
+if [ "$1" == "clean" ]; then
+    docker run -it --rm \
+    --volume ${HOME}:${HOME} \
+    --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    "${DOCKER_IMAGE_TAG}" /bin/bash -c '
+        set -e # exit on error inside the container
+        echo '${DOCKER_WORKDIR}'
+     
+        # Disable repo color prompts[]
+        git config --global color.ui false
+        ls -ltrah '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        echo "\$MACHINE: '${MACHINE}'"
+        echo "\$IMAGES: '${IMAGES}'"
+        EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        bitbake '${IMAGES} -c clean'
+    '
+elif [ "$1" == "sync" ]; then
     echo "Running with argument: $1"
     docker run -it --rm \
     --volume ${HOME}:${HOME} \
-    --volume ${DOCKER_WORKDIR}:${DOCKER_WORKDIR} \
-    --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
-    "${DOCKER_IMAGE_TAG}"
-else
-    docker run -it --rm \
-    --volume ${HOME}:${HOME} \
-    --volume ${DOCKER_WORKDIR}:${DOCKER_WORKDIR} \
     --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
     "${DOCKER_IMAGE_TAG}" /bin/bash -c '
         set -e # exit on error inside the container
@@ -45,9 +69,23 @@ else
         cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
         repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-walnascar -m '${IMX_RELEASE}'.xml
         repo sync -j`nproc`
-        EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
-        bitbake '${IMAGES}'
     '
+elif [ "$1" == "interactive" ]; then
+    echo "Running with argument: $1"
+    docker run -it --rm \
+    --volume ${HOME}:${HOME} \
+    --volume $(pwd)/${IMX_RELEASE}:${DOCKER_WORKDIR}/${IMX_RELEASE} \
+    "${DOCKER_IMAGE_TAG}" /bin/bash -c '
+        echo "\$MACHINE: '${MACHINE}'"
+        echo "\$IMAGES: '${IMAGES}'"
+        cd '${DOCKER_WORKDIR}/${IMX_RELEASE}'
+        EULA=1 MACHINE='${MACHINE}' DISTRO='${DISTRO}' source imx-setup-release.sh -b build_'${DISTRO}'
+        echo "Setup complete. Dropping into interactive shell..."
+        exec /bin/bash -i
+    '
+else
+    echo "Error: No argument supplied."
+    exit 1
 fi
 
 
