@@ -13,8 +13,8 @@ IMX_RELEASE="imx-6.12.20-2.0.0"
 
 YOCTO_DIR="${DOCKER_WORKDIR}/${IMX_RELEASE}-build"
 
-MACHINE="imx6ul-ninefives-evk"
-DISTRO="fsl-imx-fb"
+MACHINE="imx6ul-pico"
+DISTRO="fsl-imx-wayland"
 IMAGES="imx-image-core"
 #IMAGES="fsl-image-mfgtool-initramfs"
 
